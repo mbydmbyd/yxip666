@@ -1,44 +1,48 @@
 import requests
-from bs4 import BeautifulSoup
 import re
 import os
+import time
 
 # 目标URL列表
-urls = ['https://api.uouin.com/cloudflare.html', 
-        'https://ip.164746.xyz'
-        ]
+urls = [
+    'https://api.uouin.com/cloudflare.html',
+    'https://ip.164746.xyz'
+]
 
-# 正则表达式用于匹配IP地址
-ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+# IPv4正则
+ip_pattern = r'(?:\d{1,2}|1\d{2}|2[0-4]\d|25[0-5])' \
+             r'(?:\.(?:\d{1,2}|1\d{2}|2[0-4]\d|25[0-5])){3}'
 
-# 检查ip.txt文件是否存在,如果存在则删除它
-if os.path.exists('ip.txt'):
-    os.remove('ip.txt')
+ip_set = set()
 
-# 创建一个文件来存储IP地址
-with open('ip.txt', 'w') as file:
-    for url in urls:
-        # 发送HTTP请求获取网页内容
-        response = requests.get(url)
-        
-        # 使用BeautifulSoup解析HTML
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # 根据网站的不同结构找到包含IP地址的元素
-        if url == 'https://api.uouin.com/cloudflare.html':
-            elements = soup.find_all('tr')
-        elif url == 'https://ip.164746.xyz':
-            elements = soup.find_all('tr')
+# 抓取网页并提取IP
+for url in urls:
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        html_text = response.text
+        ip_matches = re.findall(ip_pattern, html_text)
+        ip_set.update(ip_matches)
+    except Exception as e:
+        print(f"请求 {url} 失败: {e}")
+
+# 查询 IP 所属国家/地区
+def get_ip_info(ip):
+    try:
+        r = requests.get(f"http://ip-api.com/json/{ip}?lang=zh-CN", timeout=5)
+        data = r.json()
+        if data["status"] == "success":
+            return f"{data.get('country', '')} {data.get('regionName', '')}"
         else:
-            elements = soup.find_all('li')
-        
-        # 遍历所有元素,查找IP地址
-        for element in elements:
-            element_text = element.get_text()
-            ip_matches = re.findall(ip_pattern, element_text)
-            
-            # 如果找到IP地址,则写入文件
-            for ip in ip_matches:
-                file.write(ip + '\n')
+            return "未知地区"
+    except:
+        return "查询失败"
 
-print('IP地址已保存到ip.txt文件中。')
+# 写入文件
+with open('ip.txt', 'w', encoding='utf-8') as file:
+    for ip in sorted(ip_set):
+        location = get_ip_info(ip)
+        file.write(f"{ip}  {location}\n")
+        time.sleep(0.5)  # 给API留点间隔，避免封禁
+
+print(f'共保存 {len(ip_set)} 个唯一IP地址及归属地到 ip.txt 文件中。')
