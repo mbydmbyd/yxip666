@@ -26,9 +26,14 @@ if os.path.exists("ip.txt"):
                 parts = line.split("#")
                 if len(parts) == 3:
                     ip, location, isp = parts
+                    # 🔥 这里去掉旧编号（只保留真正的地区名）
+                    if "-" in location:
+                        location = location.split("-")[0]
                     cache[ip] = f"{location}#{isp}"
                 elif len(parts) == 2:
                     ip, location = parts
+                    if "-" in location:
+                        location = location.split("-")[0]
                     cache[ip] = f"{location}#未知ISP"
 
 # 用集合去重
