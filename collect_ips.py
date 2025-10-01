@@ -80,9 +80,8 @@ for ip, info in results.items():
 # 输出到文件
 with open("ip.txt", "w", encoding="utf-8") as f:
     for region in sorted(grouped.keys()):
-        f.write(f"=== {region} ===\n")
         for idx, (ip, isp) in enumerate(sorted(grouped[region]), 1):
-            f.write(f"{idx}.{ip}#{region}#{isp}\n")
+            f.write(f"{ip}#{region}-{idx}#{isp}\n")
         f.write("\n")  # 组之间加空行
 
-print(f"共保存 {len(results)} 个唯一IP地址，已按地区分组编号写入 ip.txt。")
+print(f"共保存 {len(results)} 个唯一IP地址，已按地区分组并在地区后编号写入 ip.txt。")
