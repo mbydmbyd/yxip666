@@ -2,6 +2,7 @@ import requests
 import re
 import os
 import time
+from collections import defaultdict
 
 # 目标URL列表
 urls = [
@@ -69,9 +70,19 @@ for ip in sorted(ip_set):
         time.sleep(0.5)  # 防止API调用过快
     results[ip] = info
 
-# 写入文件（覆盖写入）
-with open("ip.txt", "w", encoding="utf-8") as f:
-    for ip, info in sorted(results.items()):
-        f.write(f"{ip}#{info}\n")
+# 分组存储 {region: [(ip, isp), ...]}
+grouped = defaultdict(list)
 
-print(f"共保存 {len(results)} 个唯一IP地址、归属地和ISP到 ip.txt 文件中（含缓存）。")
+for ip, info in results.items():
+    region, isp = info.split("#")
+    grouped[region].append((ip, isp))
+
+# 输出到文件
+with open("ip.txt", "w", encoding="utf-8") as f:
+    for region in sorted(grouped.keys()):
+        f.write(f"=== {region} ===\n")
+        for idx, (ip, isp) in enumerate(sorted(grouped[region]), 1):
+            f.write(f"{idx}.{ip}#{region}#{isp}\n")
+        f.write("\n")  # 组之间加空行
+
+print(f"共保存 {len(results)} 个唯一IP地址，已按地区分组编号写入 ip.txt。")
