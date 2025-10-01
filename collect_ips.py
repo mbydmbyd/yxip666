@@ -8,6 +8,9 @@ from collections import defaultdict
 urls = [
     'https://api.uouin.com/cloudflare.html',
     'https://ip.164746.xyz'
+    'https://ipdb.api.030101.xyz/?type=bestcf&country=true'
+    'https://addressesapi.090227.xyz/CloudFlareYes?proxyip=true'
+    # 'https://ip.164746.xyz'
 ]
 
 # IPv4正则
