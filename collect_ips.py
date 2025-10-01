@@ -7,8 +7,8 @@ from collections import defaultdict
 # 目标URL列表
 urls = [
     'https://api.uouin.com/cloudflare.html',
-    'https://ip.164746.xyz'
-    'https://ipdb.api.030101.xyz/?type=bestcf&country=true'
+    'https://ip.164746.xyz',
+    'https://ipdb.api.030101.xyz/?type=bestcf&country=true',
     'https://addressesapi.090227.xyz/CloudFlareYes?proxyip=true'
     # 'https://ip.164746.xyz'
 ]
