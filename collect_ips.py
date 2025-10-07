@@ -52,7 +52,7 @@ for url in urls:
         if 'html' in content_type:
             soup = BeautifulSoup(response.text, 'html.parser')
             # 不同网站结构不同
-            if 'cloudflare.html' in url or 'ip.164746.xyz' in url:
+            if '*.html' in url or '*.xyz' in url:
                 elements = soup.find_all('tr')
             else:
                 elements = soup.find_all(['li', 'p', 'div'])
