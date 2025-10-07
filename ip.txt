@@ -1,17 +1,17 @@
 103.21.244.160#加拿大 Quebec-1#CLOUDFLARE
 
-104.16.105.166#加拿大 安大略-1#Cloudflare, Inc.
-104.16.65.1#加拿大 安大略-2#Cloudflare, Inc.
-104.17.102.87#加拿大 安大略-3#Cloudflare, Inc.
-104.17.139.37#加拿大 安大略-4#Cloudflare, Inc.
-104.17.142.212#加拿大 安大略-5#Cloudflare, Inc.
-104.17.162.3#加拿大 安大略-6#Cloudflare, Inc.
-104.17.167.134#加拿大 安大略-7#Cloudflare, Inc.
-104.17.69.244#加拿大 安大略-8#Cloudflare, Inc.
-104.18.151.172#加拿大 安大略-9#Cloudflare, Inc.
-104.18.166.129#加拿大 安大略-10#Cloudflare, Inc.
-104.18.189.153#加拿大 安大略-11#Cloudflare, Inc.
-104.18.21.108#加拿大 安大略-12#Cloudflare, Inc.
+104.16.0.23#加拿大 安大略-1#Cloudflare, Inc.
+104.16.105.166#加拿大 安大略-2#Cloudflare, Inc.
+104.16.65.1#加拿大 安大略-3#Cloudflare, Inc.
+104.17.102.87#加拿大 安大略-4#Cloudflare, Inc.
+104.17.139.37#加拿大 安大略-5#Cloudflare, Inc.
+104.17.142.212#加拿大 安大略-6#Cloudflare, Inc.
+104.17.162.3#加拿大 安大略-7#Cloudflare, Inc.
+104.17.167.134#加拿大 安大略-8#Cloudflare, Inc.
+104.17.69.244#加拿大 安大略-9#Cloudflare, Inc.
+104.18.151.172#加拿大 安大略-10#Cloudflare, Inc.
+104.18.166.129#加拿大 安大略-11#Cloudflare, Inc.
+104.18.189.153#加拿大 安大略-12#Cloudflare, Inc.
 104.18.223.253#加拿大 安大略-13#Cloudflare, Inc.
 104.18.255.167#加拿大 安大略-14#Cloudflare, Inc.
 104.18.81.19#加拿大 安大略-15#Cloudflare, Inc.
