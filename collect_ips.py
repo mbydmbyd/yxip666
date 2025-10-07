@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 import re
 import os
 import time
@@ -9,31 +10,16 @@ urls = [
     'https://api.uouin.com/cloudflare.html',
     'https://ip.164746.xyz',
     'https://ipdb.api.030101.xyz/?type=bestcf&country=true',
-    'https://cf.090227.xyz', 
-    # 'https://stock.hostmonit.com/CloudFlareYes',
-    # 'https://ip.haogege.xyz/',
-    # 'https://ct.090227.xyz',
-    # 'https://cmcc.090227.xyz',    
-    # 'https://cf.vvhan.com',
+    'https://cf.090227.xyz',
     'https://addressesapi.090227.xyz/CloudFlareYes',
     'https://addressesapi.090227.xyz/ip.164746.xyz',
-    # 'https://ipdb.api.030101.xyz/?type=cfv4;proxy',
-    'https://ipdb.api.030101.xyz/?type=bestcf&country=true',
-    # 'https://ipdb.api.030101.xyz/?type=bestproxy&country=true',
-    # 'https://www.wetest.vip/page/edgeone/address_v4.html',
-    # 'https://www.wetest.vip/page/cloudfront/address_v4.html',
-    # 'https://www.wetest.vip/page/cloudflare/address_v4.html'
 ]
 
-# IPv4正则
-# ip_pattern = r'(?:\d{1,2}|1\d{2}|2[0-4]\d|25[0-5])' \
-#            r'(?:\.(?:\d{1,2}|1\d{2}|2[0-4]\d|25[0-5])){3}'
+# IPv4 正则表达式
 ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 
-# 已有缓存字典 {ip: "国家 省份#ISP"}
+# 已有缓存 {ip: "地区#ISP"}
 cache = {}
-
-# 如果 ip.txt 已存在，读取缓存
 if os.path.exists("ip.txt"):
     with open("ip.txt", "r", encoding="utf-8") as f:
         for line in f:
@@ -42,7 +28,7 @@ if os.path.exists("ip.txt"):
                 parts = line.split("#")
                 if len(parts) == 3:
                     ip, location, isp = parts
-                    # 🔥 这里去掉旧编号（只保留真正的地区名）
+                    # 清理掉旧编号（防止多次运行出现 -1-1-1）
                     if "-" in location:
                         location = location.split("-")[0]
                     cache[ip] = f"{location}#{isp}"
@@ -52,57 +38,75 @@ if os.path.exists("ip.txt"):
                         location = location.split("-")[0]
                     cache[ip] = f"{location}#未知ISP"
 
-# 用集合去重
+# 抓取IP集合
 ip_set = set()
 
-# 抓取网页并提取IP
 for url in urls:
     try:
+        print(f"正在抓取：{url}")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        html_text = response.text
-        ip_matches = re.findall(ip_pattern, html_text)
-        ip_set.update(ip_matches)
-    except Exception as e:
-        print(f"请求 {url} 失败: {e}")
+        content_type = response.headers.get('Content-Type', '')
 
-# 查询 IP 所属国家/地区/ISP
+        # 如果是 HTML 页面，用 BeautifulSoup 提取
+        if 'html' in content_type:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # 不同网站结构不同
+            if 'cloudflare.html' in url or 'ip.164746.xyz' in url:
+                elements = soup.find_all('tr')
+            else:
+                elements = soup.find_all(['li', 'p', 'div'])
+            for el in elements:
+                text = el.get_text()
+                ip_matches = re.findall(ip_pattern, text)
+                ip_set.update(ip_matches)
+        else:
+            # 对于 JSON 或纯文本接口，直接正则匹配
+            ip_matches = re.findall(ip_pattern, response.text)
+            ip_set.update(ip_matches)
+
+    except Exception as e:
+        print(f"❌ 请求失败：{url} - {e}")
+
+print(f"\n共提取到 {len(ip_set)} 个唯一 IP，开始查询地理信息...\n")
+
+# IP 查询函数
 def get_ip_info(ip):
     try:
         r = requests.get(f"http://ip-api.com/json/{ip}?lang=zh-CN", timeout=5)
         data = r.json()
         if data["status"] == "success":
-            location = f"{data.get('country', '')} {data.get('regionName', '')}".strip()
+            country = data.get("country", "")
+            region = data.get("regionName", "")
             isp = data.get("isp", "未知ISP")
+            location = f"{country} {region}".strip()
             return f"{location}#{isp}"
         else:
             return "未知地区#未知ISP"
-    except:
+    except Exception:
         return "查询失败#未知ISP"
 
-# 最终结果字典
+# 查询并组合结果
 results = {}
-
 for ip in sorted(ip_set):
     if ip in cache:
-        info = cache[ip]  # 用缓存
+        info = cache[ip]
     else:
         info = get_ip_info(ip)
-        time.sleep(0.5)  # 防止API调用过快
+        time.sleep(0.5)
     results[ip] = info
 
-# 分组存储 {region: [(ip, isp), ...]}
+# 分组 {地区: [(ip, isp), ...]}
 grouped = defaultdict(list)
-
 for ip, info in results.items():
     region, isp = info.split("#")
     grouped[region].append((ip, isp))
 
-# 输出到文件（地区后面编号 -1, -2, -3…）
+# 输出文件
 with open("ip.txt", "w", encoding="utf-8") as f:
     for region in sorted(grouped.keys()):
         for idx, (ip, isp) in enumerate(sorted(grouped[region]), 1):
             f.write(f"{ip}#{region}-{idx}#{isp}\n")
         f.write("\n")
 
-print(f"共保存 {len(results)} 个唯一IP地址，已按地区分组并在地区后加编号写入 ip.txt。")
+print(f"✅ 共保存 {len(results)} 个唯一 IP，已写入 ip.txt。")
