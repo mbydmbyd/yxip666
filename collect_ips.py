@@ -13,6 +13,7 @@ urls = [
     'https://cf.090227.xyz',
     'https://addressesapi.090227.xyz/CloudFlareYes',
     'https://addressesapi.090227.xyz/ip.164746.xyz',
+    'https://stock.hostmonit.com/CloudFlareYes',
 ]
 
 # IPv4 正则表达式
@@ -52,7 +53,7 @@ for url in urls:
         if 'html' in content_type:
             soup = BeautifulSoup(response.text, 'html.parser')
             # 不同网站结构不同
-            if '*.html' in url or '*.xyz' in url:
+            if '*.html' in url or '*.xyz' in url or '*.com' in url or '*.vip' in url:
                 elements = soup.find_all('tr')
             else:
                 elements = soup.find_all(['li', 'p', 'div'])
