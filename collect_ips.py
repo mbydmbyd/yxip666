@@ -13,6 +13,7 @@ urls = [
     'https://cf.090227.xyz',
     'https://addressesapi.090227.xyz/CloudFlareYes',
     'https://addressesapi.090227.xyz/ip.164746.xyz',
+    'https://www.wetest.vip/page/cloudflare/address_v4.html',
 ]
 
 # IPv4 正则表达式
