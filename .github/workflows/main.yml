@@ -7,12 +7,13 @@ on:
   push: # 允许提交触发
 
 jobs:
-
   update-ip-list:
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # ⚠️ 非常重要！确保可以拉取完整历史，避免 rebase 出错
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -35,7 +36,8 @@ jobs:
         if [ -n "$(git status --porcelain)" ]; then
           git add ip.txt
           git commit -m "Automatic update"
-          git push
+          git pull --rebase origin main  # ✅ 拉取远程最新版本并重放提交
+          git push origin main
         else
           echo "No changes detected, skipping commit."
         fi
