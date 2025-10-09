@@ -1,11 +1,12 @@
 import requests
-from bs4 import BeautifulSoup
 import re
 import os
 import time
 from collections import defaultdict
 
-# 目标URL列表
+# ============================================
+# 基础配置
+# ============================================
 urls = [
     'https://api.uouin.com/cloudflare.html',
     'https://ip.164746.xyz',
@@ -13,17 +14,64 @@ urls = [
     'https://cf.090227.xyz',
     'https://addressesapi.090227.xyz/CloudFlareYes',
     'https://addressesapi.090227.xyz/ip.164746.xyz',
-    'https://zip.cm.edu.kg/all.txt'  # 🌏 新增数据源
+    'https://ipdb.api.030101.xyz/?type=bestcf&country=true'
 ]
 
-# IPv4 正则表达式
+zip_data_url = "https://zip.cm.edu.kg/all.txt"  # 🇯🇵🇸🇬🇰🇷🇭🇰 数据源
+zip_target_regions = ["JP", "SG", "KR", "HK"]
+zip_count_per_region = 20  # 每个地区取 20 条
+
 ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-cidr_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?:/\d{1,2})?'  # 支持 /24 等
 
-# 国家关键字（只保留这些）
-country_keywords = ['JP', 'Japan', 'SG', 'Singapore', 'KR', 'Korea', 'HK', 'Hong Kong']
+# ============================================
+# 从 zip.cm.edu.kg/all.txt 获取 JP/SG/KR/HK 数据
+# ============================================
+def fetch_zip_region_ips(url, regions, n_each=20):
+    """从 zip.cm.edu.kg/all.txt 抓取各地区各 n 个 IP"""
+    print(f"正在从 {url} 获取指定地区数据...")
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    lines = resp.text.splitlines()
 
-# 已有缓存 {ip: "地区#ISP"}
+    region_keys = {
+        "JP": ["JP", "Japan", "日本"],
+        "SG": ["SG", "Singapore", "新加坡"],
+        "KR": ["KR", "Korea", "韩国"],
+        "HK": ["HK", "Hong Kong", "香港"]
+    }
+
+    results = {r: [] for r in regions}
+
+    def belongs_region(line, keys):
+        line_lower = line.lower()
+        for k in keys:
+            if k.lower() in line_lower:
+                return True
+        return False
+
+    cidr_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?:/\d{1,2})?'
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        for region, keys in region_keys.items():
+            if region in regions and belongs_region(stripped, keys):
+                m = re.search(cidr_pattern, stripped)
+                if m and len(results[region]) < n_each:
+                    results[region].append(m.group(0))
+                break
+        if all(len(results[r]) >= n_each for r in regions):
+            break
+
+    print("✅ 获取完毕：")
+    for r in regions:
+        print(f"  {r}: {len(results[r])} 条")
+    return results
+
+# ============================================
+# 缓存系统
+# ============================================
 cache = {}
 if os.path.exists("ip.txt"):
     with open("ip.txt", "r", encoding="utf-8") as f:
@@ -42,93 +90,67 @@ if os.path.exists("ip.txt"):
                         location = location.split("-")[0]
                     cache[ip] = f"{location}#未知ISP"
 
-# 抓取IP集合
+# ============================================
+# 普通网页源抓取
+# ============================================
 ip_set = set()
-
 for url in urls:
     try:
-        print(f"正在抓取：{url}")
-        response = requests.get(url, timeout=15)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
-        content_type = response.headers.get('Content-Type', '')
-
-        # ✅ 特殊处理 zip.cm.edu.kg/all.txt
-        if 'zip.cm.edu.kg/all.txt' in url:
-            for line in response.text.splitlines():
-                # 保留含 JP/SG/KR/HK 的行（不区分大小写）
-                if any(k.lower() in line.lower() for k in country_keywords):
-                    # 提取 IP 或 CIDR
-                    match = re.search(cidr_pattern, line)
-                    if match:
-                        ip = match.group(0)
-                        remark = line.split('#')[-1].strip() if '#' in line else ''
-                        ip_set.add((ip, remark))  # 带备注保存
-            continue  # 跳过通用提取逻辑
-
-        # 对 HTML 页面使用 BeautifulSoup
-        if 'html' in content_type:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            if 'cloudflare.html' in url or 'ip.164746.xyz' in url:
-                elements = soup.find_all('tr')
-            else:
-                elements = soup.find_all(['li', 'p', 'div'])
-            for el in elements:
-                text = el.get_text()
-                ip_matches = re.findall(ip_pattern, text)
-                for ip in ip_matches:
-                    ip_set.add((ip, ''))  # 无备注
-        else:
-            # 文本接口直接正则匹配
-            ip_matches = re.findall(ip_pattern, response.text)
-            for ip in ip_matches:
-                ip_set.add((ip, ''))
-
+        html_text = response.text
+        ip_matches = re.findall(ip_pattern, html_text)
+        ip_set.update(ip_matches)
+        print(f"✅ 从 {url} 抓取到 {len(ip_matches)} 个 IP")
     except Exception as e:
-        print(f"❌ 请求失败：{url} - {e}")
+        print(f"❌ 请求 {url} 失败: {e}")
 
-print(f"\n共提取到 {len(ip_set)} 个唯一 IP 或网段，开始查询地理信息...\n")
+# ============================================
+# 添加 zip.cm.edu.kg 的数据
+# ============================================
+zip_region_ips = fetch_zip_region_ips(zip_data_url, zip_target_regions, zip_count_per_region)
+for region, ips in zip_region_ips.items():
+    for ip in ips:
+        ip_set.add(ip)  # 加入总集合
+        cache[ip] = f"{region}#zip.cm.edu.kg"  # 不查ISP，直接标记来源
 
-# IP 查询函数
+# ============================================
+# 查询 IP 所属国家/地区/ISP（对非 zip 源）
+# ============================================
 def get_ip_info(ip):
     try:
-        r = requests.get(f"http://ip-api.com/json/{ip.split('/')[0]}?lang=zh-CN", timeout=5)
+        r = requests.get(f"http://ip-api.com/json/{ip}?lang=zh-CN", timeout=5)
         data = r.json()
         if data["status"] == "success":
-            country = data.get("country", "")
-            region = data.get("regionName", "")
+            location = f"{data.get('country', '')} {data.get('regionName', '')}".strip()
             isp = data.get("isp", "未知ISP")
-            location = f"{country} {region}".strip()
             return f"{location}#{isp}"
         else:
             return "未知地区#未知ISP"
-    except Exception:
+    except:
         return "查询失败#未知ISP"
 
-# 查询并组合结果
 results = {}
-for ip, remark in sorted(ip_set):
+for ip in sorted(ip_set):
     if ip in cache:
         info = cache[ip]
     else:
         info = get_ip_info(ip)
         time.sleep(0.5)
-    results[ip] = (info, remark)
+    results[ip] = info
 
-# 分组 {地区: [(ip, isp, remark), ...]}
+# ============================================
+# 按地区分组 + 编号输出
+# ============================================
 grouped = defaultdict(list)
-for ip, (info, remark) in results.items():
+for ip, info in results.items():
     region, isp = info.split("#")
-    grouped[region].append((ip, isp, remark))
+    grouped[region].append((ip, isp))
 
-# 输出文件
 with open("ip.txt", "w", encoding="utf-8") as f:
     for region in sorted(grouped.keys()):
-        for idx, (ip, isp, remark) in enumerate(sorted(grouped[region]), 1):
-            # 保留备注（如果有）
-            if remark:
-                f.write(f"{ip}#{region}-{idx}#{isp}#备注: {remark}\n")
-            else:
-                f.write(f"{ip}#{region}-{idx}#{isp}\n")
+        for idx, (ip, isp) in enumerate(sorted(grouped[region]), 1):
+            f.write(f"{ip}#{region}-{idx}#{isp}\n")
         f.write("\n")
 
-print(f"✅ 共保存 {len(results)} 个唯一 IP，已写入 ip.txt。仅包含 JP / SG / KR / HK 区域。")
+print(f"\n🎯 共保存 {len(results)} 个唯一 IP 地址，含 zip.cm.edu.kg 各区 20 条数据。")
