@@ -19,7 +19,7 @@ urls = [
 
 zip_data_url = "https://zip.cm.edu.kg/all.txt"  # 🇯🇵🇸🇬🇰🇷🇭🇰 数据源
 zip_target_regions = ["JP", "SG", "KR", "HK"]
-zip_count_per_region = 20  # 每个地区取 20 条
+zip_count_per_region = 30 # 每个地区取 20 条
 
 ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 
