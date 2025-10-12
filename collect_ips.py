@@ -26,7 +26,7 @@ ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 # ============================================
 # 从 zip.cm.edu.kg/all.txt 获取 JP/SG/KR/HK 数据
 # ============================================
-def fetch_zip_region_ips(url, regions, n_each=20):
+def fetch_zip_region_ips(url, regions, n_each=30):
     """从 zip.cm.edu.kg/all.txt 抓取各地区各 n 个 IP"""
     print(f"正在从 {url} 获取指定地区数据...")
     resp = requests.get(url, timeout=10)
@@ -35,9 +35,9 @@ def fetch_zip_region_ips(url, regions, n_each=20):
 
     region_keys = {
         "JP": ["JP", "Japan", "日本"],
-        "SG": ["SG", "Singapore", "新加坡"],
+        # "SG": ["SG", "Singapore", "新加坡"],
         "KR": ["KR", "Korea", "韩国"],
-        "HK": ["HK", "Hong Kong", "香港"]
+        # "HK": ["HK", "Hong Kong", "香港"]
     }
 
     results = {r: [] for r in regions}
