@@ -28,17 +28,17 @@ ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 # GitHub 多源设置（可自定义）
 # ============================================
 github_sources = [
-    "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
+    # "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
     # "https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt",
     # 可以再添加更多源
 ]
 
 # 每个地区要取多少条（仅 GitHub 源使用）
 github_targets = {
-    "SG": 30,  # 新加坡
+    # "SG": 30,  # 新加坡
     "JP": 20,  # 日本
     "KR": 20,  # 韩国
-    "HK": 20,  # 香港
+    # "HK": 20,  # 香港
 }
 
 # ============================================
