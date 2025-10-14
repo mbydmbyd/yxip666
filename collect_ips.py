@@ -35,10 +35,10 @@ github_sources = [
 
 # 每个地区要取多少条（仅 GitHub 源使用）
 github_targets = {
-    # "SG": 30,  # 新加坡
+    "SG": 30,  # 新加坡
     "JP": 20,  # 日本
     "KR": 20,  # 韩国
-    # "HK": 20,  # 香港
+    "HK": 20,  # 香港
 }
 
 # ============================================
@@ -52,9 +52,9 @@ def fetch_zip_region_ips(url, regions, n_each=30):
 
     region_keys = {
         "JP": ["JP", "Japan", "日本"],
-        "SG": ["SG", "Singapore", "新加坡"],
+        # "SG": ["SG", "Singapore", "新加坡"],
         "KR": ["KR", "Korea", "韩国"],
-        "HK": ["HK", "Hong Kong", "香港"]
+        # "HK": ["HK", "Hong Kong", "香港"]
     }
 
     results = {r: [] for r in regions}
