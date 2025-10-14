@@ -71,6 +71,15 @@ def fetch_zip_region_ips(url, regions, n_each=30):
     return results
 
 # ============================================
+# 数据源列表
+# ============================================
+urls = [
+    "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
+    # 你可以继续在这里添加更多源，例如：
+    # "https://example.com/iplist.txt",
+]
+
+# ============================================
 # 缓存系统
 # ============================================
 cache = {}
