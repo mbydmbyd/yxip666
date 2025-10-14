@@ -29,7 +29,7 @@ ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 # ============================================
 github_sources = [
     "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
-    "https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt",
+    # "https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt",
     # 可以再添加更多源
 ]
 
