@@ -99,10 +99,10 @@
 172.64.82.114#加拿大 安大略-35#Cloudflare, Inc.
 172.64.88.85#加拿大 安大略-36#Cloudflare, Inc.
 172.64.91.69#加拿大 安大略-37#Cloudflare, Inc.
-172.67.163.126#加拿大 安大略-38#Cloudflare, Inc.
-172.67.204.133#加拿大 安大略-39#Cloudflare, Inc.
-172.67.228.146#加拿大 安大略-40#Cloudflare, Inc.
-172.67.241.146#加拿大 安大略-41#Cloudflare, Inc.
+172.67.105.161#加拿大 安大略-38#Cloudflare, Inc.
+172.67.139.126#加拿大 安大略-39#Cloudflare, Inc.
+172.67.209.133#加拿大 安大略-40#Cloudflare, Inc.
+172.67.237.95#加拿大 安大略-41#Cloudflare, Inc.
 173.245.49.194#加拿大 安大略-42#Cloudflare, Inc.
 188.114.96.125#加拿大 安大略-43#Cloudflare, Inc.
 188.114.97.144#加拿大 安大略-44#Cloudflare, Inc.
@@ -116,32 +116,31 @@
 198.41.214.141#加拿大 安大略-52#Cloudflare, Inc.
 
 190.93.244.201#哥斯达黎加 Provincia de San José-1#Cloudflare, Inc.
-190.93.246.207#哥斯达黎加 Provincia de San José-2#Cloudflare, Inc.
+190.93.245.247#哥斯达黎加 Provincia de San José-2#Cloudflare, Inc.
 190.93.246.67#哥斯达黎加 Provincia de San José-3#Cloudflare, Inc.
 190.93.247.169#哥斯达黎加 Provincia de San José-4#Cloudflare, Inc.
 
-141.101.121.179#法国 法兰西岛-1#CLOUDFLARE
-
 162.159.44.35#美国 加州-1#Cloudflare, Inc.
 
-104.16.0.10#美国 新泽西州-1#Cloudflare, Inc.
-104.16.159.69#美国 新泽西州-2#Cloudflare, Inc.
-104.16.232.223#美国 新泽西州-3#Cloudflare, Inc.
-104.17.127.110#美国 新泽西州-4#Cloudflare, Inc.
-104.17.145.253#美国 新泽西州-5#Cloudflare, Inc.
-104.17.198.92#美国 新泽西州-6#Cloudflare, Inc.
-104.17.211.26#美国 新泽西州-7#Cloudflare, Inc.
-104.17.53.52#美国 新泽西州-8#Cloudflare, Inc.
-104.17.55.38#美国 新泽西州-9#Cloudflare, Inc.
-104.17.58.214#美国 新泽西州-10#Cloudflare, Inc.
-104.18.228.35#美国 新泽西州-11#Cloudflare, Inc.
-104.18.46.235#美国 新泽西州-12#Cloudflare, Inc.
-104.19.10.166#美国 新泽西州-13#Cloudflare, Inc.
-104.19.144.58#美国 新泽西州-14#Cloudflare, Inc.
-104.19.154.122#美国 新泽西州-15#Cloudflare, Inc.
-104.19.194.247#美国 新泽西州-16#Cloudflare, Inc.
-104.19.37.29#美国 新泽西州-17#Cloudflare, Inc.
-104.27.21.118#美国 新泽西州-18#Cloudflare, Inc.
+104.16.144.73#美国 新泽西州-1#Cloudflare, Inc.
+104.16.150.227#美国 新泽西州-2#Cloudflare, Inc.
+104.16.155.225#美国 新泽西州-3#Cloudflare, Inc.
+104.16.216.245#美国 新泽西州-4#Cloudflare, Inc.
+104.16.232.223#美国 新泽西州-5#Cloudflare, Inc.
+104.17.121.227#美国 新泽西州-6#Cloudflare, Inc.
+104.17.127.110#美国 新泽西州-7#Cloudflare, Inc.
+104.17.145.53#美国 新泽西州-8#Cloudflare, Inc.
+104.17.190.47#美国 新泽西州-9#Cloudflare, Inc.
+104.17.198.92#美国 新泽西州-10#Cloudflare, Inc.
+104.17.215.18#美国 新泽西州-11#Cloudflare, Inc.
+104.18.150.71#美国 新泽西州-12#Cloudflare, Inc.
+104.18.228.35#美国 新泽西州-13#Cloudflare, Inc.
+104.19.10.166#美国 新泽西州-14#Cloudflare, Inc.
+104.19.156.25#美国 新泽西州-15#Cloudflare, Inc.
+104.19.158.7#美国 新泽西州-16#Cloudflare, Inc.
+104.19.194.247#美国 新泽西州-17#Cloudflare, Inc.
+104.19.57.134#美国 新泽西州-18#Cloudflare, Inc.
+104.27.21.118#美国 新泽西州-19#Cloudflare, Inc.
 
 104.16.241.229#美国 纽约州-1#Cloudflare, Inc.
 104.21.91.19#美国 纽约州-2#Cloudflare, Inc.
