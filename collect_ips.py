@@ -20,15 +20,31 @@ urls = [
 
 zip_data_url = "https://zip.cm.edu.kg/all.txt"  # 🇯🇵🇸🇬🇰🇷🇭🇰 数据源
 zip_target_regions = ["JP", "SG", "KR", "HK"]
-zip_count_per_region = 30 # 每个地区取 20 条
+zip_count_per_region = 30  # 每个地区取 30 条
 
 ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 
 # ============================================
-# 从 zip.cm.edu.kg/all.txt 获取 JP/SG/KR/HK 数据
+# GitHub 多源设置（可自定义）
+# ============================================
+github_sources = [
+    "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
+    "https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt",
+    # 可以再添加更多源
+]
+
+# 每个地区要取多少条（仅 GitHub 源使用）
+github_targets = {
+    "SG": 30,  # 新加坡
+    "JP": 20,  # 日本
+    "KR": 20,  # 韩国
+    "HK": 20,  # 香港
+}
+
+# ============================================
+# 从 zip.cm.edu.kg/all.txt 获取地区数据
 # ============================================
 def fetch_zip_region_ips(url, regions, n_each=30):
-    """从 zip.cm.edu.kg/all.txt 抓取各地区各 n 个 IP"""
     print(f"正在从 {url} 获取指定地区数据...")
     resp = requests.get(url, timeout=10)
     resp.raise_for_status()
@@ -36,21 +52,17 @@ def fetch_zip_region_ips(url, regions, n_each=30):
 
     region_keys = {
         "JP": ["JP", "Japan", "日本"],
-        # "SG": ["SG", "Singapore", "新加坡"],
+        "SG": ["SG", "Singapore", "新加坡"],
         "KR": ["KR", "Korea", "韩国"],
-        # "HK": ["HK", "Hong Kong", "香港"]
+        "HK": ["HK", "Hong Kong", "香港"]
     }
 
     results = {r: [] for r in regions}
+    cidr_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?:/\d{1,2})?'
 
     def belongs_region(line, keys):
         line_lower = line.lower()
-        for k in keys:
-            if k.lower() in line_lower:
-                return True
-        return False
-
-    cidr_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?:/\d{1,2})?'
+        return any(k.lower() in line_lower for k in keys)
 
     for line in lines:
         stripped = line.strip()
@@ -70,14 +82,46 @@ def fetch_zip_region_ips(url, regions, n_each=30):
         print(f"  {r}: {len(results[r])} 条")
     return results
 
+
 # ============================================
-# 数据源列表
+# 从多个 GitHub 源中提取各地区 IP（不查 ISP）
 # ============================================
-urls = [
-    "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
-    # 你可以继续在这里添加更多源，例如：
-    # "https://example.com/iplist.txt",
-]
+def fetch_github_region_ips(sources, targets):
+    print(f"正在从 GitHub 源获取多地区 IP...")
+    results = {r: [] for r in targets.keys()}
+    region_keys = {
+        "JP": ["JP", "Japan", "日本"],
+        "SG": ["SG", "Singapore", "新加坡"],
+        "KR": ["KR", "Korea", "韩国"],
+        "HK": ["HK", "Hong Kong", "香港"]
+    }
+
+    for src in sources:
+        print(f"🔹 检索源: {src}")
+        try:
+            resp = requests.get(src, timeout=10)
+            resp.raise_for_status()
+            lines = resp.text.splitlines()
+            for line in lines:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                for region, keys in region_keys.items():
+                    if region not in targets:
+                        continue
+                    if any(k.lower() in stripped.lower() for k in keys):
+                        m = re.search(ip_pattern, stripped)
+                        if m and len(results[region]) < targets[region]:
+                            results[region].append(m.group(0))
+                            break
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"❌ 请求 {src} 失败: {e}")
+
+    for r, ips in results.items():
+        print(f"✅ {r}: 共获取 {len(ips)} 个 IP")
+    return results
+
 
 # ============================================
 # 缓存系统
@@ -121,11 +165,20 @@ for url in urls:
 zip_region_ips = fetch_zip_region_ips(zip_data_url, zip_target_regions, zip_count_per_region)
 for region, ips in zip_region_ips.items():
     for ip in ips:
-        ip_set.add(ip)  # 加入总集合
-        cache[ip] = f"{region}#zip.cm.edu.kg"  # 不查ISP，直接标记来源
+        ip_set.add(ip)
+        cache[ip] = f"{region}#zip.cm.edu.kg"
 
 # ============================================
-# 查询 IP 所属国家/地区/ISP（对非 zip 源）
+# 添加 GitHub 多源数据
+# ============================================
+github_region_ips = fetch_github_region_ips(github_sources, github_targets)
+for region, ips in github_region_ips.items():
+    for ip in ips:
+        ip_set.add(ip)
+        cache[ip] = f"{region}#github"
+
+# ============================================
+# 查询 IP 所属国家/地区/ISP（对非 zip/github 源）
 # ============================================
 def get_ip_info(ip):
     try:
@@ -139,6 +192,7 @@ def get_ip_info(ip):
             return "未知地区#未知ISP"
     except:
         return "查询失败#未知ISP"
+
 
 results = {}
 for ip in sorted(ip_set):
@@ -163,4 +217,4 @@ with open("ip.txt", "w", encoding="utf-8") as f:
             f.write(f"{ip}#{region}-{idx}#{isp}\n")
         f.write("\n")
 
-print(f"\n🎯 共保存 {len(results)} 个唯一 IP 地址，含 zip.cm.edu.kg 各区 20 条数据。")
+print(f"\n🎯 共保存 {len(results)} 个唯一 IP 地址（含 zip.cm.edu.kg 各区与 GitHub 多源数据）。")
