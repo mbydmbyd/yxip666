@@ -15,7 +15,7 @@ urls = [
     'https://addressesapi.090227.xyz/CloudFlareYes',
     'https://addressesapi.090227.xyz/ip.164746.xyz',
     'https://ipdb.api.030101.xyz/?type=bestcf&country=true',
-    'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/BestCF/bestcfv4.txt'
+    'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt'
 ]
 
 zip_data_url = "https://zip.cm.edu.kg/all.txt"  # 🇯🇵🇸🇬🇰🇷🇭🇰 数据源
