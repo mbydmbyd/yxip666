@@ -1,11 +1,13 @@
 import requests
-from bs4 import BeautifulSoup
 import re
 import os
 import time
 from collections import defaultdict
 
-# 目标URL列表
+# ============================================
+# 基础配置
+# ============================================
+prefer_port = True  # ✅ 是否优先显示带端口的 IP（True=带端口排前）
 urls = [
     'https://api.uouin.com/cloudflare.html',
     'https://ip.164746.xyz',
@@ -13,12 +15,111 @@ urls = [
     'https://cf.090227.xyz',
     'https://addressesapi.090227.xyz/CloudFlareYes',
     'https://addressesapi.090227.xyz/ip.164746.xyz',
+    'https://ipdb.api.030101.xyz/?type=bestcf&country=true',
+    'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt'
 ]
 
-# IPv4 正则表达式
-ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+zip_data_url = "https://zip.cm.edu.kg/all.txt"
+zip_target_regions = ["JP", "SG", "KR", "HK"]
+zip_count_per_region = 30
 
-# 已有缓存 {ip: "地区#ISP"}
+# ✅ 改进的 IP+端口匹配
+ip_pattern = r'\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?'
+
+# ============================================
+# GitHub 多源配置
+# ============================================
+github_sources = [
+    "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
+    # "https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt",
+]
+github_targets = {
+    "SG": 30,
+    "JP": 20,
+    "KR": 20,
+    "HK": 20,
+}
+
+# ============================================
+# 从 zip.cm.edu.kg 获取地区数据
+# ============================================
+def fetch_zip_region_ips(url, regions, n_each=30):
+    print(f"正在从 {url} 获取指定地区数据...")
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    lines = resp.text.splitlines()
+
+    region_keys = {
+        "JP": ["JP", "Japan", "日本"],
+        # "SG": ["SG", "Singapore", "新加坡"],
+        "KR": ["KR", "Korea", "韩国"],
+        # "HK": ["HK", "Hong Kong", "香港"]
+    }
+
+    results = {r: [] for r in regions}
+    def belongs_region(line, keys):
+        return any(k.lower() in line.lower() for k in keys)
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        for region, keys in region_keys.items():
+            if region in regions and belongs_region(stripped, keys):
+                m = re.search(ip_pattern, stripped)
+                if m and len(results[region]) < n_each:
+                    results[region].append(m.group(0))
+                break
+        if all(len(results[r]) >= n_each for r in regions):
+            break
+
+    print("✅ 获取完毕：")
+    for r in regions:
+        print(f"  {r}: {len(results[r])} 条")
+    return results
+
+# ============================================
+# 从多个 GitHub 源提取各地区 IP（含端口，不查 ISP）
+# ============================================
+def fetch_github_region_ips(sources, targets):
+    print(f"正在从 GitHub 源获取多地区 IP（含端口）...")
+    results = {r: [] for r in targets.keys()}
+    region_keys = {
+        "JP": ["JP", "Japan", "日本"],
+        "SG": ["SG", "Singapore", "新加坡"],
+        "KR": ["KR", "Korea", "韩国"],
+        "HK": ["HK", "Hong Kong", "香港"]
+    }
+
+    for src in sources:
+        print(f"🔹 检索源: {src}")
+        try:
+            resp = requests.get(src, timeout=10)
+            resp.raise_for_status()
+            lines = resp.text.splitlines()
+            for line in lines:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                for region, keys in region_keys.items():
+                    if region not in targets:
+                        continue
+                    if any(k.lower() in stripped.lower() for k in keys):
+                        m = re.search(ip_pattern, stripped)
+                        if m and len(results[region]) < targets[region]:
+                            results[region].append(m.group(0))
+                            break
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"❌ 请求 {src} 失败: {e}")
+
+    for r, ips in results.items():
+        print(f"✅ {r}: 共获取 {len(ips)} 个 IP（含端口）")
+    return results
+
+# ============================================
+# 缓存系统
+# ============================================
 cache = {}
 if os.path.exists("ip.txt"):
     with open("ip.txt", "r", encoding="utf-8") as f:
@@ -28,7 +129,6 @@ if os.path.exists("ip.txt"):
                 parts = line.split("#")
                 if len(parts) == 3:
                     ip, location, isp = parts
-                    # 清理掉旧编号（防止多次运行出现 -1-1-1）
                     if "-" in location:
                         location = location.split("-")[0]
                     cache[ip] = f"{location}#{isp}"
@@ -38,55 +138,56 @@ if os.path.exists("ip.txt"):
                         location = location.split("-")[0]
                     cache[ip] = f"{location}#未知ISP"
 
-# 抓取IP集合
+# ============================================
+# 普通网页源抓取
+# ============================================
 ip_set = set()
-
 for url in urls:
     try:
-        print(f"正在抓取：{url}")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        content_type = response.headers.get('Content-Type', '')
-
-        # 如果是 HTML 页面，用 BeautifulSoup 提取
-        if 'html' in content_type:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            # 不同网站结构不同
-            if 'cloudflare.html' in url or 'ip.164746.xyz' in url:
-                elements = soup.find_all('tr')
-            else:
-                elements = soup.find_all(['li', 'p', 'div'])
-            for el in elements:
-                text = el.get_text()
-                ip_matches = re.findall(ip_pattern, text)
-                ip_set.update(ip_matches)
-        else:
-            # 对于 JSON 或纯文本接口，直接正则匹配
-            ip_matches = re.findall(ip_pattern, response.text)
-            ip_set.update(ip_matches)
-
+        html_text = response.text
+        ip_matches = re.findall(ip_pattern, html_text)
+        ip_set.update(ip_matches)
+        print(f"✅ 从 {url} 抓取到 {len(ip_matches)} 个 IP（含端口）")
     except Exception as e:
-        print(f"❌ 请求失败：{url} - {e}")
+        print(f"❌ 请求 {url} 失败: {e}")
 
-print(f"\n共提取到 {len(ip_set)} 个唯一 IP，开始查询地理信息...\n")
+# ============================================
+# 添加 zip.cm.edu.kg 数据
+# ============================================
+zip_region_ips = fetch_zip_region_ips(zip_data_url, zip_target_regions, zip_count_per_region)
+for region, ips in zip_region_ips.items():
+    for ip in ips:
+        ip_set.add(ip)
+        cache[ip] = f"{region}#zip.cm.edu.kg"
 
-# IP 查询函数
+# ============================================
+# 添加 GitHub 多源数据
+# ============================================
+github_region_ips = fetch_github_region_ips(github_sources, github_targets)
+for region, ips in github_region_ips.items():
+    for ip in ips:
+        ip_set.add(ip)
+        cache[ip] = f"{region}#github"
+
+# ============================================
+# 查询 IP 信息（跳过 zip/github 源）
+# ============================================
 def get_ip_info(ip):
     try:
-        r = requests.get(f"http://ip-api.com/json/{ip}?lang=zh-CN", timeout=5)
+        ip_no_port = ip.split(":")[0]
+        r = requests.get(f"http://ip-api.com/json/{ip_no_port}?lang=zh-CN", timeout=5)
         data = r.json()
         if data["status"] == "success":
-            country = data.get("country", "")
-            region = data.get("regionName", "")
+            location = f"{data.get('country', '')} {data.get('regionName', '')}".strip()
             isp = data.get("isp", "未知ISP")
-            location = f"{country} {region}".strip()
             return f"{location}#{isp}"
         else:
             return "未知地区#未知ISP"
-    except Exception:
+    except:
         return "查询失败#未知ISP"
 
-# 查询并组合结果
 results = {}
 for ip in sorted(ip_set):
     if ip in cache:
@@ -96,17 +197,25 @@ for ip in sorted(ip_set):
         time.sleep(0.5)
     results[ip] = info
 
-# 分组 {地区: [(ip, isp), ...]}
+# ============================================
+# 按地区分组 + 编号输出（支持端口优先）
+# ============================================
 grouped = defaultdict(list)
 for ip, info in results.items():
     region, isp = info.split("#")
     grouped[region].append((ip, isp))
 
-# 输出文件
 with open("ip.txt", "w", encoding="utf-8") as f:
     for region in sorted(grouped.keys()):
-        for idx, (ip, isp) in enumerate(sorted(grouped[region]), 1):
+        if prefer_port:
+            # ✅ 带端口的 IP 排前面
+            sorted_ips = sorted(grouped[region], key=lambda x: (":" not in x[0], x[0]))
+        else:
+            # 🚫 不区分端口
+            sorted_ips = sorted(grouped[region], key=lambda x: x[0])
+
+        for idx, (ip, isp) in enumerate(sorted_ips, 1):
             f.write(f"{ip}#{region}-{idx}#{isp}\n")
         f.write("\n")
 
-print(f"✅ 共保存 {len(results)} 个唯一 IP，已写入 ip.txt。")
+print(f"\n🎯 共保存 {len(results)} 个唯一 IP 地址（{'带端口优先' if prefer_port else '普通排序'}，含 zip.cm.edu.kg 与 GitHub 多源数据）。")
