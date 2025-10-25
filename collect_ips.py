@@ -21,9 +21,9 @@ urls = [
     'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt'
 ]
 
-# zip_data_url = "https://zip.cm.edu.kg/all.txt"
-# zip_target_regions = ["JP", "SG", "KR", "HK"]
-# zip_count_per_region = 30
+zip_data_url = "https://zip.cm.edu.kg/all.txt"
+zip_target_regions = ["JP", "SG", "KR", "HK"]
+zip_count_per_region = 3
 
 # ✅ 改进的 IP+端口匹配
 ip_pattern = r'\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?'
@@ -70,12 +70,12 @@ def safe_get(url, timeout=(5, 30)):
 # ============================================
 # 从 zip.cm.edu.kg 获取地区数据
 # ============================================
-# def fetch_zip_region_ips(url, regions, n_each=30):
-#    print(f"正在从 {url} 获取指定地区数据...")
-#    resp = safe_get(url, timeout=(5, 40))
-#    if not resp:
-#        print(f"⚠️ 无法访问 {url}，跳过该数据源。")
-#        return {r: [] for r in regions}
+ def fetch_zip_region_ips(url, regions, n_each=30):
+    print(f"正在从 {url} 获取指定地区数据...")
+    resp = safe_get(url, timeout=(5, 40))
+    if not resp:
+        print(f"⚠️ 无法访问 {url}，跳过该数据源。")
+        return {r: [] for r in regions}
 
     lines = resp.text.splitlines()
 
@@ -84,28 +84,28 @@ def safe_get(url, timeout=(5, 30)):
         "KR": ["KR", "Korea", "韩国"],
     }
 
-#    results = {r: [] for r in regions}
+    results = {r: [] for r in regions}
 
-#    def belongs_region(line, keys):
-#        return any(k.lower() in line.lower() for k in keys)
+    def belongs_region(line, keys):
+        return any(k.lower() in line.lower() for k in keys)
 
-#    for line in lines:
+    for line in lines:
         stripped = line.strip()
-#        if not stripped:
-#            continue
-#        for region, keys in region_keys.items():
-#            if region in regions and belongs_region(stripped, keys):
-#                m = re.search(ip_pattern, stripped)
-#                if m and len(results[region]) < n_each:
-#                    results[region].append(m.group(0))
-#                break
-#        if all(len(results[r]) >= n_each for r in regions):
-#            break
+        if not stripped:
+            continue
+        for region, keys in region_keys.items():
+            if region in regions and belongs_region(stripped, keys):
+                m = re.search(ip_pattern, stripped)
+                if m and len(results[region]) < n_each:
+                    results[region].append(m.group(0))
+                break
+        if all(len(results[r]) >= n_each for r in regions):
+            break
 
-#    print("✅ 获取完毕：")
-#    for r in regions:
-#        print(f"  {r}: {len(results[r])} 条")
-#    return results
+    print("✅ 获取完毕：")
+    for r in regions:
+        print(f"  {r}: {len(results[r])} 条")
+    return results
 
 # ============================================
 # 从多个 GitHub 源提取各地区 IP
