@@ -33,12 +33,16 @@ ip_pattern = r'\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?'
 # ============================================
 github_sources = [
     "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
+    "https://raw.githubusercontent.com/chris202010/yxip/refs/heads/main/city.txt",
 ]
 github_targets = {
     "SG": 30,
     "JP": 20,
     "KR": 20,
     "HK": 20,
+    "香港": 20,
+    "日本": 20,
+    "新加坡": 20,
 }
 
 # ============================================
