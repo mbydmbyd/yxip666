@@ -2,6 +2,8 @@ import requests
 import re
 import os
 import time
+import csv
+from io import StringIO
 from collections import defaultdict
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -33,7 +35,6 @@ ip_pattern = r'\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?'
 # ============================================
 github_sources = [
     "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
-    "https://raw.githubusercontent.com/chris202010/yxip/refs/heads/main/temp.csv",
 ]
 github_targets = {
     "SG": 30,
@@ -47,8 +48,8 @@ github_targets = {
 # ============================================
 session = requests.Session()
 retries = Retry(
-    total=3,  # 重试次数
-    backoff_factor=2,  # 每次重试延迟递增
+    total=3,
+    backoff_factor=2,
     status_forcelist=[429, 500, 502, 503, 504],
 )
 adapter = HTTPAdapter(max_retries=retries)
@@ -70,7 +71,7 @@ def safe_get(url, timeout=(5, 30)):
 # ============================================
 # 从 zip.cm.edu.kg 获取地区数据
 # ============================================
- def fetch_zip_region_ips(url, regions, n_each=30):
+def fetch_zip_region_ips(url, regions, n_each=30):
     print(f"正在从 {url} 获取指定地区数据...")
     resp = safe_get(url, timeout=(5, 40))
     if not resp:
@@ -78,7 +79,6 @@ def safe_get(url, timeout=(5, 30)):
         return {r: [] for r in regions}
 
     lines = resp.text.splitlines()
-
     region_keys = {
         "JP": ["JP", "Japan", "日本"],
         "KR": ["KR", "Korea", "韩国"],
@@ -180,6 +180,49 @@ for url in urls:
     print(f"✅ 从 {url} 抓取到 {len(ip_matches)} 个 IP（含端口）")
 
 # ============================================
+# 新增数据源：chris202010 的 temp.csv（自动识别国家）
+# ============================================
+extra_source = "https://raw.githubusercontent.com/chris202010/yxip/refs/heads/main/temp.csv"
+print(f"🔹 从新源获取数据: {extra_source}")
+
+resp = safe_get(extra_source)
+if resp:
+    text = resp.text.strip()
+    ip_found = 0
+    csv_reader = csv.reader(StringIO(text))
+    headers = next(csv_reader, None)
+
+    if headers and any(h.lower() in ["ip", "address"] for h in headers):
+        header_map = {h.lower(): i for i, h in enumerate(headers)}
+        for row in csv_reader:
+            try:
+                ip = row[header_map.get("ip", 0)].strip()
+                port = row[header_map.get("port")] if "port" in header_map else ""
+                country = row[header_map.get("country")] if "country" in header_map else ""
+                region = row[header_map.get("region")] if "region" in header_map else ""
+                if re.match(r"^\d{1,3}(?:\.\d{1,3}){3}$", ip):
+                    if port:
+                        ip_full = f"{ip}:{port.strip()}"
+                    else:
+                        ip_full = ip
+                    ip_set.add(ip_full)
+                    label = country or region or "未知地区"
+                    cache[ip_full] = f"{label}#temp.csv"
+                    ip_found += 1
+            except Exception:
+                continue
+    else:
+        ip_matches = re.findall(ip_pattern, text)
+        ip_set.update(ip_matches)
+        for ip in ip_matches:
+            cache[ip] = "未知地区#temp.csv"
+        ip_found = len(ip_matches)
+
+    print(f"✅ 从 {extra_source} 抓取到 {ip_found} 个 IP（含端口）")
+else:
+    print(f"⚠️ 无法访问 {extra_source}，已跳过。")
+
+# ============================================
 # 添加 zip.cm.edu.kg 数据
 # ============================================
 zip_region_ips = fetch_zip_region_ips(zip_data_url, zip_target_regions, zip_count_per_region)
@@ -226,7 +269,7 @@ for ip in sorted(ip_set):
     results[ip] = info
 
 # ============================================
-# 按地区分组 + 编号输出
+# 按地区分组 + 编号输出（含来源标注）
 # ============================================
 grouped = defaultdict(list)
 for ip, info in results.items():
@@ -235,13 +278,13 @@ for ip, info in results.items():
 
 with open("ip.txt", "w", encoding="utf-8") as f:
     for region in sorted(grouped.keys()):
+        f.write(f"# ===== 地区: {region} =====\n")
         if prefer_port:
             sorted_ips = sorted(grouped[region], key=lambda x: (":" not in x[0], x[0]))
         else:
             sorted_ips = sorted(grouped[region], key=lambda x: x[0])
-
         for idx, (ip, isp) in enumerate(sorted_ips, 1):
             f.write(f"{ip}#{region}-{idx}#{isp}\n")
         f.write("\n")
 
-print(f"\n🎯 共保存 {len(results)} 个唯一 IP 地址（{'带端口优先' if prefer_port else '普通排序'}，含 zip.cm.edu.kg 与 GitHub 多源数据）。")
+print(f"\n🎯 共保存 {len(results)} 个唯一 IP 地址（含 zip.cm.edu.kg、GitHub、多源 CSV，带端口优先）。")
