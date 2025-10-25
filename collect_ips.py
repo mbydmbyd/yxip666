@@ -21,9 +21,9 @@ urls = [
     'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/bestcf.txt'
 ]
 
-zip_data_url = "https://zip.cm.edu.kg/all.txt"
-zip_target_regions = ["JP", "SG", "KR", "HK"]
-zip_count_per_region = 30
+# zip_data_url = "https://zip.cm.edu.kg/all.txt"
+# zip_target_regions = ["JP", "SG", "KR", "HK"]
+# zip_count_per_region = 30
 
 # ✅ 改进的 IP+端口匹配
 ip_pattern = r'\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?'
@@ -33,6 +33,7 @@ ip_pattern = r'\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?'
 # ============================================
 github_sources = [
     "https://raw.githubusercontent.com/JiangXi9527/CNJX/refs/heads/main/test-ip.txt",
+    "https://raw.githubusercontent.com/chris202010/yxip/refs/heads/main/temp.csv",
 ]
 github_targets = {
     "SG": 30,
