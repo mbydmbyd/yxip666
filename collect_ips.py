@@ -40,9 +40,7 @@ github_targets = {
     "JP": 20,
     "KR": 20,
     "HK": 20,
-    "香港": 20,
-    "日本": 20,
-    "新加坡": 20,
+    "TW": 20,
 }
 
 # ============================================
@@ -120,7 +118,8 @@ def fetch_github_region_ips(sources, targets):
         "JP": ["JP", "Japan", "日本"],
         "SG": ["SG", "Singapore", "新加坡"],
         "KR": ["KR", "Korea", "韩国"],
-        "HK": ["HK", "Hong Kong", "香港"]
+        "HK": ["HK", "Hong Kong", "香港"],
+        "TW": ["TW", "Tai Wang", "台湾","台北","TYP","TP"]
     }
 
     for src in sources:
