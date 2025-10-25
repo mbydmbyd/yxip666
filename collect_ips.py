@@ -70,7 +70,7 @@ def safe_get(url, timeout=(5, 30)):
 # ============================================
 # 从 zip.cm.edu.kg 获取地区数据
 # ============================================
-def fetch_zip_region_ips(url, regions, n_each=30):
+# def fetch_zip_region_ips(url, regions, n_each=30):
     print(f"正在从 {url} 获取指定地区数据...")
     resp = safe_get(url, timeout=(5, 40))
     if not resp:
